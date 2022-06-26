@@ -15,22 +15,37 @@ with open('\\'.join(__file__.split('\\')[:-2])+'\\token.txt') as file: token = f
 def format_question(guild_id: int, question: dict):
     return f"**Quiz ID:** {guild_id} | {quiz_progress[guild_id]['quiz_id']}\n__**Sauce:**__ {question['sauce']}\n__**Text:**__ {question['text']}\n"+'\n'.join([f"{i} {question['options'][i]}" for i in question['options']])
 
+def calculate_result(quiz: list, response: list):
+    return sum([1 for i in range(len(quiz)) if quiz[i]['correct_option'] == response[i] ])
+
 async def quiz_refresh(guild_id):
     '''Main quiz work is done here.'''
+    with open(f'quizzes/{quiz_progress[guild_id]["quiz_id"]}.json', encoding = 'utf-16') as file:
+        loaded_quizzes[guild_id] = json.load(file)
     for user in quiz_progress[guild_id]['participants']:
+        print(user)
+        if user in responses:
+            await user.send(f"You are already registered in the quiz in server **{quizbot.get_guild(responses[user]['guild_id'])}**")
+            continue
+        responses[user] = {'guild_id' : guild_id, 'response' : [None for i in range(loaded_quizzes[guild_id]['quiz_length'])] }
         await user.send(f"You have been registered for **Quiz {quiz_progress[guild_id]['quiz_id']}** in server **{quizbot.get_guild(guild_id)}**")
-        with open(f'quizzes/{quiz_progress[guild_id]["quiz_id"]}.json', encoding = 'utf-16') as file:
-            loaded_quizzes[guild_id] = json.load(file)
-        await quiz_progress[guild_id]['channel'].send("**Participants of the quiz:\n**" + '\n'.join([f'<@{user.id}>' for user in quiz_progress[guild_id]['participants']])+"\nQuiz will start in 5 seconds.")
-        await sleep(5)
+    await quiz_progress[guild_id]['channel'].send("**Participants of the quiz:\n**" + '\n'.join([f'<@{user.id}>' for user in quiz_progress[guild_id]['participants']])+"\nQuiz will start in 5 seconds.")
+    await sleep(5)
     quiz_progress[guild_id]['status'] = 1
     while quiz_progress[guild_id]['status'] <= loaded_quizzes[guild_id]['quiz_length']:
         message_string = format_question(guild_id, loaded_quizzes[guild_id]['quiz'][quiz_progress[guild_id]['status']-1])
         for user in quiz_progress[guild_id]['participants']:
             await user.send(message_string)
-            await sleep(15)
+        await sleep(17.5    )
         quiz_progress[guild_id]['status'] += 1
     else:
+        results = []
+        for user in quiz_progress[guild_id]['participants']:
+            print(f"Responses of [{user}]: {responses[user]['response']}")
+            results.append( {'user': user, 'marks': calculate_result(loaded_quizzes[guild_id]['quiz'], responses[user]['response'] ) })
+            responses.pop(user)
+        results = sorted(results, key = lambda x: x['marks'], reverse = True)
+        await quiz_progress[guild_id]['channel'].send("**__Results:__**\n"+'\n'.join([f"**{i+1}:** @{results[i]['user']}  ({results[i]['marks']} pts)" for i in range(len(results))]))
         quiz_progress.pop(guild_id)
 
 @quizbot.event
@@ -44,10 +59,12 @@ async def on_ready():
 
 @quizbot.event
 async def on_reaction_add(reaction, user):
-    if reaction.message.author == quizbot.user:
+    if reaction.message.author == quizbot.user and user != quizbot.user:
         if reaction.message.guild == None:
-            #code for quiz...
-            pass
+            guild_id = responses[user]['guild_id']
+            if reaction.message.content.startswith("**Quiz ID:**") and user != quizbot.user and reaction.emoji in loaded_quizzes[guild_id]['quiz'][quiz_progress[guild_id]['status']-1]['options']:
+                responses[user]['response'][quiz_progress[guild_id]['status']-1] = reaction.emoji
+                print(f"{user} reacted {reaction.emoji} to question {quiz_progress[guild_id]['status']}")
         else:
             if reaction.message.content.startswith("**Starting Quiz ID:**"):
                 if user != quizbot.user and reaction.emoji == '🇾' and quiz_progress[reaction.message.guild.id]['status']==0 and reaction.message.id == quiz_progress[reaction.message.guild.id]['message_id']:
@@ -56,10 +73,12 @@ async def on_reaction_add(reaction, user):
 
 @quizbot.event
 async def on_reaction_remove(reaction, user):
-    if reaction.message.author == quizbot.user:
+    if reaction.message.author == quizbot.user and quizbot.user != user:
         if reaction.message.guild == None:
-            #code for quiz...
-            pass
+            guild_id = responses[user]['guild_id']
+            if reaction.message.content.startswith("**Quiz ID:**") and user != quizbot.user and reaction.emoji == responses[user]['response'][quiz_progress[guild_id]['status']-1]:
+                responses[user]['response'][quiz_progress[guild_id]['status']-1] = None
+            
         else:
             if reaction.message.content.startswith("**Starting Quiz ID:**"):
                 if user != quizbot.user and reaction.emoji == '🇾' and quiz_progress[reaction.message.guild.id]['status']==0 and reaction.message.id == quiz_progress[reaction.message.guild.id]['message_id']:
@@ -84,15 +103,18 @@ async def on_message(message):
             await quiz_refresh(message.guild.id)            
         if message.content.startswith("**Quiz ID:**"):
             guild_id = int(message.content.split('\n')[0].split()[2])
-            print(guild_id)
             for i in loaded_quizzes[guild_id]['quiz'][quiz_progress[guild_id]['status']-1]['options']: await message.add_reaction(i)
+            await sleep(15)
+            await message.delete()
+        if message.content.startswith("You have been registered"):
+            await sleep(5)
+            await message.delete()
 
 @quizbot.command(name = 'exit', aliases = ['kill', 'off', 'disconnect'])
 async def exit(ctx):
     '''To turn off bot. Mainly for dev purposes. Won't be present in final one.'''
     print(f"Exit time: {datetime.now()}")
     await quizbot.close()
-
 
 @quizbot.command(name = 'start_quiz', aliases = ['start', 'begin', 'begin_quiz'])
 async def start_quiz(ctx, quiz_id: int):

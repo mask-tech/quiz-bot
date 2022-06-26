@@ -7,6 +7,7 @@ from os import chdir
 chdir('\\'.join(__file__.split('\\')[:-1]))     #Changing path to keep files in same folder
 quizbot = commands.Bot(command_prefix = '<>', intents = discord.Intents.all(), help_command = None)
 quiz_progress = {}
+token = '... not posting it here lol'
 # server_id : {'participants' : [#list of participants] , 'status' : 0}
 
 @quizbot.event
@@ -69,4 +70,4 @@ async def start_quiz(ctx, quiz_id: int):
     await ctx.send(f"**Starting Quiz ID:** {quiz_id}. React with 🇾 to participate.")
     await sleep(10)
 
-quizbot.run('OTY5NDU0MTQzMjA5MDc4ODM0.GNGqC3.4zz6ESqJziUOJ0Khn0mpF1Gk2TzGc-dGrgaxD4')
+quizbot.run(token)

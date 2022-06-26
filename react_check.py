@@ -2,7 +2,7 @@ import discord, json
 from asyncio import sleep
 from datetime import datetime
 from discord.ext import commands
-from os import chdir
+from os import chdir, listdir
 
 chdir('\\'.join(__file__.split('\\')[:-1]))     #Changing path to keep files in same folder
 quizbot = commands.Bot(command_prefix = '<>', intents = discord.Intents.all(), help_command = None)
@@ -17,6 +17,15 @@ def format_question(guild_id: int, question: dict):
 
 def calculate_result(quiz: list, response: list):
     return sum([1 for i in range(len(quiz)) if quiz[i]['correct_option'] == response[i] ])
+
+def format_results(results: list):
+    output = "__**Result:**__\n"
+    i = 1
+    for j in range(len(results)):
+        if j:
+            if results[j]['marks'] != results[j-1]['marks']: i = j+1
+        output += f"**{i}:** <@{results[j]['user'].id}> ({results[j]['marks']} pts)\n" 
+    return output
 
 async def quiz_refresh(guild_id):
     '''Main quiz work is done here.'''
@@ -45,7 +54,7 @@ async def quiz_refresh(guild_id):
             results.append( {'user': user, 'marks': calculate_result(loaded_quizzes[guild_id]['quiz'], responses[user]['response'] ) })
             responses.pop(user)
         results = sorted(results, key = lambda x: x['marks'], reverse = True)
-        await quiz_progress[guild_id]['channel'].send("**__Results:__**\n"+'\n'.join([f"**{i+1}:** @{results[i]['user']}  ({results[i]['marks']} pts)" for i in range(len(results))]))
+        await quiz_progress[guild_id]['channel'].send(format_results(results))
         quiz_progress.pop(guild_id)
 
 @quizbot.event
@@ -128,6 +137,10 @@ async def start_quiz(ctx, quiz_id: int):
         return None
     quiz_progress[ctx.message.guild.id] = {'quiz_id': quiz_id , 'participants' : [] , 'status' : 0, 'channel' : ctx.channel}
     await ctx.send(f"**Starting Quiz ID:** {quiz_id}. React with 🇾 to participate within 15 seconds.")
+
+@quizbot.command(name = 'available_quizzes', aliases = ['available', 'list'])
+async def available_quizzes(ctx):
+    await ctx.send("Available quiz codes:\n```\n"+"\n".join([i[:-5] for i in listdir('quizzes') if '.json' in i])+'\n```')
 
 quizbot.run(token)
 #Honk

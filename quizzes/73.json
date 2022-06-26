@@ -1,0 +1,90 @@
+{
+    "quiz_length" : 7 , 
+    "quiz" :
+    [
+        {
+            "sauce" : "Jujitsu Kaisen" , 
+            "text" : "Mahito's cursed technique allows him to do which of the following?",
+            "options" :
+            {
+                "🇦" : "Manipulate the nature of a soul.",
+                "🇧" : "Manipulate the shape of a soul.",                
+                "🇨" : "Take over the soul of anyone.",
+                "🇩" : "Covert souls of others into energy."
+            }, 
+            "correct_option" : "🇧"
+        },
+        {
+            "sauce" : "That time I reincarnated as a Slime (Tensura)" , 
+            "text" : "What skill was Rimuru granted during the process of being reincarnated and being transferred to the other world?",
+            "options" :
+            {
+                "🇦" : "Predator",
+                "🇧" : "Berseker",
+                "🇨" : "Ravager",
+                "🇩" : "Gluttony"
+            }, 
+            "correct_option" : "🇦"
+        },
+        {
+            "sauce" : "Naruto Shippuden" , 
+            "text" : "Which of the following releases is Naruto not capable of?",
+            "options" :
+            {
+                "🇦" : "Wind Release",
+                "🇧" : "Lava Release",
+                "🇨" : "Magnet Release",
+                "🇩" : "Storm Release"
+            }, 
+            "correct_option" : "🇩"
+        },
+        {
+            "sauce" : "Attack on Titan" , 
+            "text" : "Which of the following titans can attract other nearby titans by screaming?",
+            "options" :
+            {
+                "🇦" : "Beast Titan",
+                "🇧" : "Female Titan",
+                "🇨" : "Founding Titan",
+                "🇩" : "Attack Titan"
+            }, 
+            "correct_option" : "🇧"
+        },
+        {
+            "sauce" : "Assassination Classroom" , 
+            "text" : "Which country is Ritsu originally from?",
+            "options" :
+            {
+                "🇦" : "Sweden",
+                "🇧" : "Norway",
+                "🇨" : "Korea",
+                "🇩" : "USA"
+            }, 
+            "correct_option" : "🇧"
+        },
+        {
+            "sauce" : "Gintama" , 
+            "text" : "What is the full name of Zura?",
+            "options" :
+            {
+                "🇦" : "Nensura Hitoki",
+                "🇧" : "Takasugi Menzura",
+                "🇨" : "Katsura Kotaro",
+                "🇩" : "Shokaku Katsura"
+            }, 
+            "correct_option" : "🇨"
+        },
+        {
+            "sauce" : "My Hero Academia" , 
+            "text" : "Which of the following quirks do not belong to any of the 'Wild Wild Pussycats'?",
+            "options" :
+            {
+                "🇦" : "Telepathy",
+                "🇧" : "Search",
+                "🇨" : "Earth Flow",
+                "🇩" : "Elasticity"
+            }, 
+            "correct_option" : "🇩"
+        }
+    ]
+}

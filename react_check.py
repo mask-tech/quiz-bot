@@ -6,19 +6,22 @@ from os import chdir, listdir
 
 chdir('\\'.join(__file__.split('\\')[:-1]))     #Changing path to keep files in same folder
 quizbot = commands.Bot(command_prefix = '<>', intents = discord.Intents.all(), help_command = None)
-quiz_progress = {}
-loaded_quizzes = {}
-responses = {}
+quiz_progress = {}          #For storing the progress of the quiz in a global scale
+loaded_quizzes = {}         #To store the quizzes loaded from the JSON files
+responses = {}              #To store the responses of the participants for the quizzes
 
 with open('\\'.join(__file__.split('\\')[:-2])+'\\token.txt') as file: token = file.read()
 
 def format_question(guild_id: int, question: dict):
+    '''Makes a string based on the question dict for the DM message.'''
     return f"**Quiz ID:** {guild_id} | {quiz_progress[guild_id]['quiz_id']}\n__**Sauce:**__ {question['sauce']}\n__**Text:**__ {question['text']}\n"+'\n'.join([f"{i} {question['options'][i]}" for i in question['options']])
 
 def calculate_result(quiz: list, response: list):
+    '''Calculates the result based on the quiz and responses.'''
     return sum([1 for i in range(len(quiz)) if quiz[i]['correct_option'] == response[i] ])
 
 def format_results(results: list):
+    '''Makes a string based on the sorted results for the message.'''
     output = "__**Result:**__\n"
     i = 1
     for j in range(len(results)):
@@ -31,6 +34,9 @@ async def quiz_refresh(guild_id):
     '''Main quiz work is done here.'''
     with open(f'quizzes/{quiz_progress[guild_id]["quiz_id"]}.json', encoding = 'utf-16') as file:
         loaded_quizzes[guild_id] = json.load(file)
+    if len(quiz_progress[guild_id]['participants'])==0:
+        await quiz_progress[guild_id]['channel'].send("Uh oh. Nobody's participating. Try again later")
+        return None
     for user in quiz_progress[guild_id]['participants']:
         print(user)
         if user in responses:
@@ -56,6 +62,7 @@ async def quiz_refresh(guild_id):
         results = sorted(results, key = lambda x: x['marks'], reverse = True)
         await quiz_progress[guild_id]['channel'].send(format_results(results))
         quiz_progress.pop(guild_id)
+        loaded_quizzes.pop(guild_id)
 
 @quizbot.event
 async def on_ready():
@@ -140,6 +147,7 @@ async def start_quiz(ctx, quiz_id: int):
 
 @quizbot.command(name = 'available_quizzes', aliases = ['available', 'list'])
 async def available_quizzes(ctx):
+    '''To check for all available quizzes as of now.'''
     await ctx.send("Available quiz codes:\n```\n"+"\n".join([i[:-5] for i in listdir('quizzes') if '.json' in i])+'\n```')
 
 quizbot.run(token)

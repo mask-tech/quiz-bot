@@ -1,0 +1,46 @@
+{
+    "quiz_id" : 23 , 
+    "quiz_length" : 3 , 
+    "quiz" :
+    [
+        {
+            "q_no" : 1 ,
+            "sauce" : "Naruto" , 
+            "text" : "What is Naruto's Surname?",
+            "options" :
+            {
+                "🇦" : "Shippuden",
+                "🇧" : "Uzumaki",
+                "🇨" : "Uchiha",
+                "🇩" : "Senju"
+            }, 
+            "correct_option" : "🇧"
+        }, 
+        {
+            "q_no" : 2 ,
+            "sauce" : "My Hero Academia" , 
+            "text" : "What is Izuku Midoriya's own Quirk?",
+            "options" :
+            {
+                "🇦" : "One For All",
+                "🇧" : "All For One",
+                "🇨" : "Green Lightning",
+                "🇩" : "Quirkless"
+            }, 
+            "correct_option" : "🇩"
+        }, 
+        {
+            "q_no" : 3 ,
+            "sauce" : "That time I reincarnated as a Slime (Tensura)" , 
+            "text" : "Which of the following is not something which Rimuru got when he reincarnated?",
+            "options" :
+            {
+                "🇦" : "Magic Sense",
+                "🇧" : "Predator",
+                "🇨" : "Great Sage",
+                "🇩" : "Thermal Fluctuation Nullification"
+            }, 
+            "correct_option" : "🇦"
+        }
+    ]
+}

@@ -7,14 +7,22 @@ from os import chdir
 chdir('\\'.join(__file__.split('\\')[:-1]))     #Changing path to keep files in same folder
 quizbot = commands.Bot(command_prefix = '<>', intents = discord.Intents.all(), help_command = None)
 quiz_progress = {}
+loaded_quizzes = {}
 # server_id : {'participants' : [#list of participants] , 'status' : 0}
 
 with open('\\'.join(__file__.split('\\')[:-2])+'\\token.txt') as file: token = file.read()
 
 async def quiz_refresh(guild_id):
     '''Main quiz work is done here.'''
-    for user in quiz_progress[guild_id]['participants']:
-        await user.send(f"You have been registered for **Quiz {quiz_progress[guild_id]['quiz_id']}** in server **{quizbot.get_guild(guild_id)}**")
+    if status == 0:
+        for user in quiz_progress[guild_id]['participants']:
+            await user.send(f"You have been registered for **Quiz {quiz_progress[guild_id]['quiz_id']}** in server **{quizbot.get_guild(guild_id)}**")
+            with open(f'quizzes/{quiz_progress[guild_id]["quiz_id"]}.json') as file:
+                loaded_quizzes[guild_id] = json.load(file)
+            await sleep(5)
+            await quiz_progress[guild_id]['channel'].send("**Participants of the quiz:\n**" + '\n'.join([f'<@{user.id}>' for user in quiz_progress[message.guild.id]['participants']])+"\nQuiz will start in 5 seconds.")
+    status += 1    
+
 
 @quizbot.event
 async def on_ready():
@@ -64,15 +72,13 @@ async def on_message(message):
             await message.add_reaction('🇾')
             await sleep(15)
             await message.delete()
-            await message.channel.send("**Participants of the quiz:\n**" + '\n'.join([f'<@{user.id}>' for user in quiz_progress[message.guild.id]['participants']])+"\nQuiz will start in 5 seconds.")
-            await sleep(5)
-            await quiz_refresh(message.guild.id)
+            quiz_refresh(message.guild.id)            
 
 
 @quizbot.command(name = 'exit', aliases = ['kill', 'off', 'disconnect'])
 async def exit(ctx):
     '''To turn off bot. Mainly for dev purposes. Won't be present in final one.'''
-    print(f"Exit time: {datetime.now}")
+    print(f"Exit time: {datetime.now()}")
     await quizbot.close()
 
 
@@ -82,7 +88,7 @@ async def start_quiz(ctx, quiz_id: int):
     if quiz_progress[ctx.message.guild.id]: 
         await ctx.send("A quiz is already registered in this server. ")
         return None
-    quiz_progress[ctx.message.guild.id] = {'quiz_id': quiz_id , 'participants' : [] , 'status' : 0}
+    quiz_progress[ctx.message.guild.id] = {'quiz_id': quiz_id , 'participants' : [] , 'status' : 0, 'channel' : ctx.channel}
     await ctx.send(f"**Starting Quiz ID:** {quiz_id}. React with 🇾 to participate within 15 seconds.")
 
 quizbot.run(token)

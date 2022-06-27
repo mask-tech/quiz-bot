@@ -5,7 +5,7 @@ from discord.ext import commands
 from os import chdir, listdir
 
 chdir('\\'.join(__file__.split('\\')[:-1]))     #Changing path to keep files in same folder
-quizbot = commands.Bot(command_prefix = '<>', intents = discord.Intents.all(), help_command = None)
+quizbot = commands.Bot(command_prefix = '0>', intents = discord.Intents.all(), help_command = None)
 quiz_progress = {}          #For storing the progress of the quiz in a global scale
 loaded_quizzes = {}         #To store the quizzes loaded from the JSON files
 responses = {}              #To store the responses of the participants for the quizzes
@@ -54,7 +54,7 @@ async def quiz_refresh(guild_id):
         message_string = format_question(guild_id, loaded_quizzes[guild_id]['quiz'][quiz_progress[guild_id]['status']-1])
         for user in quiz_progress[guild_id]['participants']:
             await user.send(message_string)
-        await sleep(17.5    )
+        await sleep(17.5)
         quiz_progress[guild_id]['status'] += 1
     else:
         results = []
@@ -64,16 +64,15 @@ async def quiz_refresh(guild_id):
             responses.pop(user)
         results = sorted(results, key = lambda x: x['marks'], reverse = True)
         await quiz_progress[guild_id]['channel'].send(format_results(results))
-        quiz_progress.pop(guild_id)
-        loaded_quizzes.pop(guild_id)
+        for i in list(quiz_progress[guild_id].keys()): del quiz_progress[guild_id][i] 
+        quiz_progress[guild_id] = None
+        del loaded_quizzes[(guild_id)]
 
 @quizbot.event
 async def on_ready():
     print(f"Wake up time: {datetime.now()}")
     for guild in quizbot.guilds: 
         print(f"Up and running in server [{guild}]")
-        try: open(f'logs/{guild.id}.txt', 'r+', encoding = 'utf-16').close()
-        except IOError: open(f'logs/{guild.id}.txt', 'w', encoding = 'utf-16').close()
         quiz_progress[guild.id] = None
 
 @quizbot.event
@@ -163,7 +162,8 @@ async def terminate_quiz(ctx):
     if ctx.guild:
         if ctx.guild.id in quiz_progress and ctx.message.author in quiz_progress[ctx.guild.id]['participants']+[quizbot.get_user(owner)]: 
             await ctx.send("The quiz will be stopped in a few seconds. Please ignore the next quiz message, if any.")
-            quiz_progress.pop(ctx.guild.id)
+            for i in list(quiz_progress[ctx.guild.id].keys()): del quiz_progress[ctx.guild.id][i] 
+            quiz_progress[ctx.guild.id] = None
             loaded_quizzes.pop(ctx.guild.id)
             for user in responses:
                 if responses[user]['guild_id'] == ctx.guild.id: responses.pop(user);
@@ -174,7 +174,8 @@ async def terminate_quiz(ctx):
             guild_id = responses[ctx.message.author]['guild_id']
             await ctx.send("The quiz will be stopped in a few seconds. Please ignore the next quiz message, if any.")
             await quiz_progress[guild_id]['channel']("The quiz will be stopped in a few seconds. Please ignore the next quiz message, if any.")
-            quiz_progress.pop(guild_id)
+            for i in list(quiz_progress[guild_id].keys()): del quiz_progress[guild_id][i] 
+            quiz_progress[guild_id] = None
             loaded_quizzes.pop(guild_id)
             for user in responses:
                 if responses[user]['guild_id'] == guild_id: responses.pop(user);

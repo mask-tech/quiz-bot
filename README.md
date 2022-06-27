@@ -29,15 +29,94 @@ After the 17.5 second gap, the question message will be deleted and the next mes
 ```
 [start | begin | start_quiz | begin_quiz] {quiz_id}: To start a quiz.
 [list | available | available_quizzes]: Lists all available quizzes as of the moment.
+[info | describe] {quiz_id}: To give the title/description of a quiz.
+[terminate]: To stop a quiz midway if it is started by mistake.
 ```
 
 ### New commands which are expected to be added:
 
 ```
-[info | describe] {quiz_id}: To give the title/description of a quiz.
-[terminate]: To stop a quiz midway if it is started by mistake.
 [skip]: To skip a quiz if the participant chooses not to continue.
 ```
+
+## Storing Data:
+
+The quizzes are stored in JSON files with names _quiz_id_.json in the following format: 
+
+```json
+{
+    "quiz_length" : number_of_questions,
+    "quiz":
+    [
+        {
+            "sauce" : "Name of the Anime/Manga" , 
+            "text" : "The text of the question",
+            "options" :
+            {
+                "🇦" : "Option A",
+                "🇧" : "Option B",                
+                "🇨" : "Option C",
+                "🇩" : "Option D"
+            }, 
+            "correct_option" : "key of correct option"
+        },
+        ...
+    ]
+}
+```
+
+The descriptions are stored in another JSON file, i.e., `descriptions.json` in the following format:
+
+```json
+{
+    "quizzes" :
+    [
+        {
+            "quiz_id" : quiz_id,
+            "quiz_name" : "Name of the quiz",
+            "quiz_length" : number_of_questions,
+            "quiz_description" : "A string with a brief description of the quiz"
+        },
+        ...
+    ]
+}
+```
+
+## 
+
+Using Python's built-in JSON package, the bot extracts the description file, and the quizzes whenever they are needed. The progress of all quizzes currently active are stored in a dictionary `quiz_progress` which has the information on all currently running quizzes. The values are stored in this format.
+
+```python
+quiz_progress = {
+    server_1_id : {'quiz_id' : quiz_id, 'participants' : [list of participants], 'status' : current_question_status, 'channel' : channel_object},
+    server_2_id : {...},
+    ...
+}
+```
+
+- `quiz_id` is an integer as mentioned in earlier instances.
+- The list of `participants` gets updated as they react to the message relating to the quiz participation.
+- `status` represents the current question number. status = 0 implies waiting for participants to sign-up
+- `channel` represents the channel where the start command was called. All messages, from the participant list to the results will be sent to that channel
+
+Quizzes are loaded and stored in a separate dictionary `loaded_quizzes`. The values are stored in this format
+
+```python
+loaded_quizzes = {
+    server_1_id : json file loaded as dict,
+    ...
+}
+```
+
+The responses by the participants are also stored in a dictionary `responses`. The values are stored in this format
+
+```python
+responses = {
+    user_1_id : {'guild_id' :guild_where_quiz_going_on, 'response' : [list of responses]},
+    ...
+}
+```
+
 
 ## 
 

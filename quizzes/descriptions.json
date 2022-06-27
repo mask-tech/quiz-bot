@@ -1,0 +1,17 @@
+{
+    "quizzes" : 
+    [
+        {
+            "quiz_id" : 23,
+            "quiz_name" : "Test Quiz 1",
+            "quiz_length" : 3,
+            "quiz_description" : "Test quiz made for testing the bot."
+        },
+        {
+            "quiz_id" : 73,
+            "quiz_name" : "Test Quiz 2",
+            "quiz_length" : 7,
+            "quiz_description" : "Test quiz made for testing the bot. Uses some old MASK questions too."
+        }
+    ]
+}

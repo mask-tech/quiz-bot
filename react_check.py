@@ -9,8 +9,11 @@ quizbot = commands.Bot(command_prefix = '<>', intents = discord.Intents.all(), h
 quiz_progress = {}          #For storing the progress of the quiz in a global scale
 loaded_quizzes = {}         #To store the quizzes loaded from the JSON files
 responses = {}              #To store the responses of the participants for the quizzes
+moderation_roles = {}       #Need to be added to prevent misuse of some commands.
 
 with open('\\'.join(__file__.split('\\')[:-2])+'\\token.txt') as file: token = file.read()
+with open('\\'.join(__file__.split('\\')[:-2])+'\\owner.txt') as file: owner = int(file.read())
+with open('quizzes/descriptions.json') as file: descriptions = json.load(file)['quizzes']
 
 def format_question(guild_id: int, question: dict):
     '''Makes a string based on the question dict for the DM message.'''
@@ -103,9 +106,6 @@ async def on_reaction_remove(reaction, user):
 
 @quizbot.event
 async def on_message(message):
-    if message.guild:
-        with open(f'logs/{message.guild.id}.txt', 'a', encoding = 'utf-16') as file:
-            file.write(f'[{message.author} | {message.author.id}]\n{message.content}\n\n')
     if message.author != quizbot.user and message.content.startswith(quizbot.command_prefix):
         try: 
             await quizbot.process_commands(message)
@@ -122,19 +122,25 @@ async def on_message(message):
             for i in loaded_quizzes[guild_id]['quiz'][quiz_progress[guild_id]['status']-1]['options']: await message.add_reaction(i)
             await sleep(15)
             await message.delete()
-        if message.content.startswith("You have been registered"):
+        if message.content.startswith("You have been registered") or message.content.startswith("The quiz will be stopped"):
             await sleep(5)
             await message.delete()
 
 @quizbot.command(name = 'exit', aliases = ['kill', 'off', 'disconnect'])
 async def exit(ctx):
     '''To turn off bot. Mainly for dev purposes. Won't be present in final one.'''
+    if ctx.message.author.id != owner:
+        await ctx.send("You don't have the rights to tell me to go kill myself. Sus.")
+        print(f"{ctx.message.author} in {ctx.guild} asked me to go die. Boohoo.")
+        return None
     print(f"Exit time: {datetime.now()}")
     await quizbot.close()
 
 @quizbot.command(name = 'start_quiz', aliases = ['start', 'begin', 'begin_quiz'])
 async def start_quiz(ctx, quiz_id: int):
     '''Starts the quiz. Afterwards, another async function will be used to run the quiz'''
+    if ctx.guild == None:
+        await ctx.send("This command is supported only in servers. Please don't use this command in DMs. ")
     try: open(f'quizzes/{quiz_id}.json', encoding = 'utf-16').close()
     except:
         await ctx.send("Quiz ID does not exist. Please check the quiz ID or contact Goos.")
@@ -148,7 +154,38 @@ async def start_quiz(ctx, quiz_id: int):
 @quizbot.command(name = 'available_quizzes', aliases = ['available', 'list'])
 async def available_quizzes(ctx):
     '''To check for all available quizzes as of now.'''
-    await ctx.send("Available quiz codes:\n```\n"+"\n".join([i[:-5] for i in listdir('quizzes') if '.json' in i])+'\n```')
+    await ctx.send("Available quiz codes:\n```\n"+"\n".join([f"{i['quiz_id']}: {i['quiz_name']}" for i in descriptions])+'\n```')
+
+@quizbot.command(name = 'terminate_quiz', aliases = ['stop','stop_quiz', 'terminate'])
+async def terminate_quiz(ctx):
+    '''To terminate the currently running quiz.'''
+    print(f"Terminate called by {ctx.message.author}")
+    if ctx.guild:
+        if ctx.guild.id in quiz_progress and ctx.message.author in quiz_progress[ctx.guild.id]['participants']+[quizbot.get_user(owner)]: 
+            await ctx.send("The quiz will be stopped in a few seconds. Please ignore the next quiz message, if any.")
+            quiz_progress.pop(ctx.guild.id)
+            loaded_quizzes.pop(ctx.guild.id)
+            for user in responses:
+                if responses[user]['guild_id'] == ctx.guild.id: responses.pop(user);
+        else:
+            await ctx.send("There are no quizzes registered in this server as of now.")
+    else:
+        if ctx.message.author in responses:
+            guild_id = responses[ctx.message.author]['guild_id']
+            await ctx.send("The quiz will be stopped in a few seconds. Please ignore the next quiz message, if any.")
+            await quiz_progress[guild_id]['channel']("The quiz will be stopped in a few seconds. Please ignore the next quiz message, if any.")
+            quiz_progress.pop(guild_id)
+            loaded_quizzes.pop(guild_id)
+            for user in responses:
+                if responses[user]['guild_id'] == guild_id: responses.pop(user);
+        else:
+            await ctx.send("You are not registered in any quizzes.")
+
+@quizbot.command(name = 'describe', aliases = ['desc', 'info', 'deets'])
+async def quiz_info(ctx, quiz_id: int):
+    for quiz in descriptions:
+        if quiz['quiz_id'] == quiz_id:
+            await ctx.send("\n".join([f"**{i.replace('_',' ').capitalize()}**: {quiz[i]}" for i in quiz]))
 
 quizbot.run(token)
 #Honk

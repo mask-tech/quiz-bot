@@ -2,6 +2,14 @@
 
 __My first GitHub project:__ A Quiz Bot for MASK using discord.py.
 
+##
+### :star: Announcement: :star:
+I will be working on making the bot to conduct quizzes using image questions. This will hopefully be done by EoD of Sunday (10 Juy 2022). 
+
+*(moving on...)*
+##
+
+
 ## Purpose:
 The idea to make this bot came when we had our first MASK quiz. It is expected that none of us knew _that_ many animes and we were forced to rely on herd mentality. Because of this one reason, the purpose of the quiz was somewhat nullified. In order to make the responses anonymous, this bot will be using the DMs to send questions and receive responses rather than using a channel common to all participants.
 
@@ -43,54 +51,54 @@ After the 17.5 second gap, the question message will be deleted and the next mes
 
 The quizzes are stored in JSON files with names _quiz_id_.json in the following format: 
 
-```json
+```js
 {
-    "quiz_length" : number_of_questions,
-    "quiz":
-    [
-        {
-            "sauce" : "Name of the Anime/Manga" , 
-            "text" : "The text of the question",
-            "options" :
-            {
-                "🇦" : "Option A",
-                "🇧" : "Option B",                
-                "🇨" : "Option C",
-                "🇩" : "Option D"
-            }, 
-            "correct_option" : "key of correct option"
-        },
-        ...
-    ]
+	"quiz_length" : number_of_questions,
+	"quiz":
+	[
+		{
+			"sauce" : "Name of the Anime/Manga" , 
+			"text" : "The text of the question",
+			"options" :
+			{
+				"🇦" : "Option A",
+				"🇧" : "Option B",                
+				"🇨" : "Option C",
+				"🇩" : "Option D"
+			}, 
+			"correct_option" : "key of correct option"
+		},
+		...
+	]
 }
 ```
 
 The descriptions are stored in another JSON file, i.e., `descriptions.json` in the following format:
 
-```json
+```js
 {
-    "quizzes" :
-    [
-        {
-            "quiz_id" : quiz_id,
-            "quiz_name" : "Name of the quiz",
-            "quiz_length" : number_of_questions,
-            "quiz_description" : "A string with a brief description of the quiz"
-        },
-        ...
-    ]
+	"quizzes" :
+	[
+		{
+			"quiz_id" : quiz_id,
+			"quiz_name" : "Name of the quiz",
+			"quiz_length" : number_of_questions,
+			"quiz_description" : "A string with a brief description of the quiz"
+		},
+		...
+	]
 }
 ```
 
-## 
+##
 
 Using Python's built-in JSON package, the bot extracts the description file, and the quizzes whenever they are needed. The progress of all quizzes currently active are stored in a dictionary `quiz_progress` which has the information on all currently running quizzes. The values are stored in this format.
 
 ```python
 quiz_progress = {
-    server_1_id : {'quiz_id' : quiz_id, 'participants' : [list of participants], 'status' : current_question_status, 'channel' : channel_object},
-    server_2_id : {...},
-    ...
+	server_1_id : {'quiz_id' : quiz_id, 'participants' : [list of participants], 'status' : current_question_status, 'channel' : channel_object},
+	server_2_id : {...},
+	...
 }
 ```
 
@@ -103,8 +111,8 @@ Quizzes are loaded and stored in a separate dictionary `loaded_quizzes`. The val
 
 ```python
 loaded_quizzes = {
-    server_1_id : json file loaded as dict,
-    ...
+	server_1_id : json file loaded as dict,
+	...
 }
 ```
 
@@ -112,8 +120,8 @@ The responses by the participants are also stored in a dictionary `responses`. T
 
 ```python
 responses = {
-    user_1_id : {'guild_id' :guild_where_quiz_going_on, 'response' : [list of responses]},
-    ...
+	user_1_id : {'guild_id' :guild_where_quiz_going_on, 'response' : [list of responses]},
+	...
 }
 ```
 

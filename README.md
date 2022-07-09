@@ -4,7 +4,7 @@ __My first GitHub project:__ A Quiz Bot for MASK using discord.py.
 
 ##
 ### :star: Announcement: :star:
-I will be working on making the bot to conduct quizzes using image questions. This will hopefully be done by EoD of Sunday (10 Juy 2022). 
+I am working on making the bot to conduct quizzes using image questions. This is more or less done. I will just need to get the resources (README and other files) updated.
 
 *(moving on...)*
 ##

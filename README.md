@@ -57,8 +57,11 @@ The quizzes are stored in JSON files with names _quiz_id_.json in the following 
 	"quiz":
 	[
 		{
-			"sauce" : "Name of the Anime/Manga" , 
+			"sauce" : "Name of the Anime/Manga" ,
+			for text question
 			"text" : "The text of the question",
+			for image question
+			"image" : "The local path of the file, generally guiz_files/...",
 			"options" :
 			{
 				"🇦" : "Option A",
@@ -125,6 +128,36 @@ responses = {
 }
 ```
 
+## Working:
+
+The main function where the quiz work is done is a helper function called `quiz_refresh`.
+
+Once the function `start n` is called, the bot checks for these things:
+- Whether the command was called in a DM or a server.
+- If the quiz exists.
+- Whether the server has a quiz ongoing.
+
+Once this is done, a record is added to `quiz_progress` with the key as the current guild and the function `quiz_refresh` is called after all participants have reacted \[Y\] to the message.
+
+In the `quiz_refresh` function, there are broadly four things done.
+- Checks for any abnormalities (no reactions, members participating in two servers at same time, etc.)
+- Loading the quiz and messaging all participants before the quiz starts.
+- Sending questions in a periodic manner every 17.5 seconds.
+- Calculating and posting the result using the reactions by the participants.
+
+Now, you might've noticed that I haven't mentioned anything about reactions being added or recorded. This is because these tasks are done in the events `on_message`, `on_reaction_add` and `on_reaction_remove`.
+
+To identify the type of message which needs these tasks to be done on, the messages are started of in a specific syntax. The **Quiz Question** messages start like this
+
+> **Quiz ID:** guild_id | quiz_id
+
+while the message which registers participants starts like this
+
+> **Starting Quiz ID:** quiz_id.
+
+Using this text pattern and configuring it to react only when the message's author is the bot, I can manage the reactions' responses. The reason why I delete a question/message once it's purpose is done is also to prevent the question to act as a way of sending information to the bot and confusing the response mechanism.
+
+For the most part, editing `quiz_refresh` is enough for variations in quiz questions. If embed system is brought into game, then I'll have to change more, but until then, this is the system which will be followed by the bot.
 
 ## 
 

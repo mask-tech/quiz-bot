@@ -2,18 +2,18 @@ import discord, json
 from asyncio import sleep
 from datetime import datetime
 from discord.ext import commands
-from os import chdir, listdir
+from os import chdir, listdir, getcwd
 
 chdir('\\'.join(__file__.split('\\')[:-1]))     #Changing path to keep files in same folder
-quizbot = commands.Bot(command_prefix = '0>', intents = discord.Intents.all(), help_command = None)
+quizbot = commands.Bot(command_prefix = '0> ', intents = discord.Intents.all(), help_command = None)
 quiz_progress = {}          #For storing the progress of the quiz in a global scale
 loaded_quizzes = {}         #To store the quizzes loaded from the JSON files
 responses = {}              #To store the responses of the participants for the quizzes
 moderation_roles = {}       #Need to be added to prevent misuse of some commands.
 
-#Note: Save the bot token and the bot owner ID outside the folder having the bot code in token.txt and owner.txt
-with open('\\'.join(__file__.split('\\')[:-2])+'\\token.txt') as file: token = file.read()
-with open('\\'.join(__file__.split('\\')[:-2])+'\\owner.txt') as file: owner = int(file.read())
+#Note: Save the bot token and the bot owner ID in the folder having the bot code in token.txt and owner.txt
+with open(getcwd()+'\\token.txt') as file: token = file.read()
+with open(getcwd()+'\\owner.txt') as file: owner = int(file.read())
 with open('quizzes/descriptions.json') as file: descriptions = json.load(file)['quizzes']
 
 def format_question(guild_id: int, question: dict):
@@ -139,9 +139,7 @@ async def on_message(message):
 	'''The core of user interface of the bot. If this fails, it's as good as bot being dead. It. Has. Everything.'''
 	#Bot command checks (Ignores all unnecessary messages.)
 	if message.author != quizbot.user and message.content.startswith(quizbot.command_prefix):
-		try: 
-			await quizbot.process_commands(message)
-		except discord.ext.commands.errors.CommandNotFound: await message.channel.send("Command does not exist. :-!")
+		await quizbot.process_commands(message)
 	#QuizBot messages. Reaction addition, awaiting, deleting, you name it. It's all here.
 	elif message.author == quizbot.user:
 		#No need to explain. If it's a quiz registry message, add a reaction, wait a few seconds, delete the message and start it.
@@ -161,6 +159,14 @@ async def on_message(message):
 		if message.content.startswith("You have been registered") or message.content.startswith("The quiz will be stopped"):
 			await sleep(5)
 			await message.delete()
+
+@quizbot.event
+async def on_command_error(ctx, error):
+	'''For the instance of false commands or permission restriction'''
+	if isinstance(error, commands.CommandNotFound):
+		await ctx.send("No command like what you're looking for :-!")
+	elif isinstance(error, discord.Forbidden):
+		await ctx.send("Looks like I don't have the permission to perform it. ")
 
 #QuizBot Commands: Specific commands which can be called using the command prefix.
 
@@ -238,6 +244,18 @@ async def quiz_info(ctx, quiz_id: int):
 	for quiz in descriptions:
 		if quiz['quiz_id'] == quiz_id:
 			await ctx.send("\n".join([f"**{i.replace('_',' ').capitalize()}**: {quiz[i]}" for i in quiz]))
+
+@quizbot.command()
+async def ping(ctx):
+	await ctx.send(f"Pong! \n**Latency:** {quizbot.latency*1000: .2f}ms")
+
+@quizbot.command()
+async def quack(ctx):
+	await ctx.send("*No*, **Quack you!**")
+
+@quizbot.command()
+async def honk(ctx):
+	await ctx.send("Yeah!!! My man! A **Honk** especially for you. ")
 
 quizbot.run(token)
 #Honk

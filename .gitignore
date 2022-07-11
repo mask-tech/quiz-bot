@@ -1,3 +1,4 @@
 #Ignore the token file and the owner file
-token.txt
-owner.txt
+moderation/token.txt
+moderation/owner.txt
+moderation/roles.json

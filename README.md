@@ -49,6 +49,15 @@ After the 17.5 second gap, the question message will be deleted and the next mes
 
 ## Storing Data:
 
+There is one file (in the `moderation/` directory) which is absolutely needed for the bot to work:
+- `token.txt` : It is needed to run the bot.
+
+There are two other files (also in the `moderation/` directory) which are needed for administration purposes. They can be left with a `falsy` value as well:
+- `owner.txt` : This file holds the owner (your Discord ID.) This can be used to override some permissions reserved to only organizers. In case you want to ignore it, you can just make a file and use a dummy integer value
+- `roles.json` : This file holds the records of a server and it's organizer role ID. For first time initialisation, you can just make the file and set the content to `{}`.
+
+> Note: Without these 3 files, the bot will not work properly. These are to be added by the user when they use it.
+
 The quizzes are stored in JSON files with names _quiz_id_.json in the following format: 
 
 ```js
@@ -123,7 +132,7 @@ The responses by the participants are also stored in a dictionary `responses`. T
 
 ```python
 responses = {
-	user_1_id : {'guild_id' :guild_where_quiz_going_on, 'response' : [list of responses]},
+	user_1 : {'guild_id' :guild_where_quiz_going_on, 'response' : [list of responses]},
 	...
 }
 ```

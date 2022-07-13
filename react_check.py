@@ -2,14 +2,14 @@ import discord, json
 from asyncio import sleep
 from datetime import datetime
 from discord.ext import commands
-from os import chdir, listdir, getcwd
+from os import chdir
 
-chdir('\\'.join(__file__.split('\\')[:-1]))     #Changing path to keep files in same folder
+chdir('\\'.join(__file__.split('\\')[:-1]))		#Changing path to keep files in same folder
 quizbot= commands.Bot(command_prefix= '0> ', intents= discord.Intents.all(), help_command= None)
-quiz_progress= {}          #For storing the progress of the quiz in a global scale
-loaded_quizzes= {}         #To store the quizzes loaded from the JSON files
-responses= {}              #To store the responses of the participants for the quizzes
-moderation_roles= {}       #Need to be added to prevent misuse of some commands.
+quiz_progress= {}			#For storing the progress of the quiz in a global scale
+loaded_quizzes= {}			#To store the quizzes loaded from the JSON files
+responses= {}				#To store the responses of the participants for the quizzes
+moderation_roles= {}		#Need to be added to prevent misuse of some commands.
 
 #Note: Save the bot token and the bot owner ID in the 'moderation' folder in token.txt and owner.txt
 with open('moderation/token.txt') as file: token= file.read()
@@ -63,13 +63,13 @@ async def quiz_refresh(guild_id):
 		#Checking for text question or pictorial question
 		if 'text' in loaded_quizzes[guild_id]['quiz'][quiz_progress[guild_id]['status']-1]:
 			message_string= format_question(guild_id, loaded_quizzes[guild_id]['quiz'][quiz_progress[guild_id]['status']-1])
-			img= None
+			user.send(message_string)
 		else:
 			message_string= f"**Quiz ID:** {guild_id} | {quiz_progress[guild_id]['quiz_id']}"
-			with open(loaded_quizzes[guild_id]['quiz'][quiz_progress[guild_id]['status']-1]['image'], 'rb') as f:
-				img= discord.File(f)
-		for user in quiz_progress[guild_id]['participants']:
-			await user.send(message_string, file=img)
+			for user in quiz_progress[guild_id]['participants']:
+				with open(loaded_quizzes[guild_id]['quiz'][quiz_progress[guild_id]['status']-1]['image'], 'rb') as f:
+					img= discord.File(f)
+					await user.send(message_string, file=img)
 		#Sleep for 17.5 seconds before sending next question. The reaction calculation will be done by on_reaction_add/remove
 		await sleep(17.5)
 		quiz_progress[guild_id]['status'] += 1
@@ -109,10 +109,20 @@ async def on_ready():
 		quiz_progress[guild.id]= None
 		if guild.id not in moderation_roles:
 			moderation_roles[guild.id] = 0
-			print(f"Warning: Need to add Moderation role for server {guild}")
+			print(f"Warning: Need to add Organizer role for server {guild}")
 		elif not moderation_roles[guild.id]:
-			print(f"Warning: Need to add Moderation role for server {guild}")
+			print(f"Warning: Need to add Organizer role for server {guild}")
 	print()
+
+@quizbot.event
+async def on_guild_join(guild):
+	print(f"Joined server [{guild}].\nNote: Organizer role needed for the guild")
+	quiz_progress[guild.id] = None
+	moderation_roles[guild.id] = 0
+	with open("moderation/roles.json", "w") as file: 
+		file.write("{\n")
+		for guild in moderation_roles: file.write(f'\t"{guild}": {moderation_roles[guild]}, \n')
+		file.write('\t"0": 0\n}')
 
 @quizbot.event
 async def on_reaction_add(reaction, user):
@@ -188,12 +198,20 @@ async def on_command_error(ctx, error):
 
 #QuizBot Commands: Specific commands which can be called using the command prefix.
 
-@quizbot.command(name= 'help')
-async def help(ctx):
+@quizbot.command(name= 'help', description= "Help Command. Lists the list of commands and the details of commands too.")
+async def help(ctx, cmd: str= "", *args):
 	'''Please don't booli me.'''
-	await ctx.send("Hello. Goose is lazy so hasn't made a help command yet. Blame him for this :skull: \nMeanwhile, check the README link in the repository. At least he has done some stuff there (*\*sigh\**) \nClick here:https://github.com/Goose-Of-War/quiz-bot/blob/main/README.md")
+	#await ctx.send("Hello. Goose is lazy so hasn't made a help command yet. Blame him for this :skull: \nMeanwhile, check the README link in the repository. At least he has done some stuff there (*\*sigh\**) \nClick here:https://github.com/Goose-Of-War/quiz-bot/blob/main/README.md")
+	if not cmd:
+		await ctx.send(f"Hello. \nHere's the list of all commands in the bot (you can check each individual command details using `{quizbot.command_prefix}help command`): \n\n**__Common commands:__** \n> `available`: This is used to list all available commands in the bot. \n> `describe`: This is used to get info of a command. \n> `ping`: Shows the latency of the bot. \n\n**__Organizer Commands:__** \n> `organizer`: Used to set or get the organizer role who can perform admin functions. \n> `start_quiz`: Used to start a quiz in the server. \n> `terminate`: Used to stop a quiz in the server. \n\nThere are some other functions too. I'll let you find them out. Until then. \nHonk!")
+		return 
+	try: 
+		command= quizbot.get_command(cmd)
+		await ctx.send("**Command:** [ "+f"{command.name}"+ (" | " if command.aliases else "")+ " | ".join(command.aliases)+ f" ]\nDescription: {command.description}")
+	except:
+		await ctx.send("Command not found :-!")
 
-@quizbot.command(name= 'exit', aliases= ['kill', 'off', 'disconnect'])
+@quizbot.command(name= 'exit', aliases= ['kill', 'off', 'disconnect'], description= "Owner only command. Makes bot go to sleep.")
 async def exit(ctx):
 	'''To turn off bot. Mainly for dev purposes. Won't be present in final one.'''
 	if ctx.message.author.id != owner:
@@ -203,7 +221,7 @@ async def exit(ctx):
 	print(f"Exit time: {datetime.now()}")
 	await quizbot.close()
 
-@quizbot.command(name= 'start_quiz', aliases= ['start', 'begin', 'begin_quiz'])
+@quizbot.command(name= 'start_quiz', aliases= ['start', 'begin', 'begin_quiz'], description= f"Starts a quiz in the server. Syntax: {quizbot.command_prefix}start_quiz *quiz_id*")
 async def start_quiz(ctx, quiz_id: int):
 	'''Starts the quiz. Afterwards, another async function will be used to run the quiz'''
 	#Not in server, no quiz for you. Imagine farming experience using this mechanism once the quizzes are released lol.
@@ -313,6 +331,15 @@ async def quack(ctx):
 @quizbot.command(name= "honk", description= "Honk!")
 async def honk(ctx):
 	await ctx.send("Yeah!!! My man! A **Honk** especially for you. ")
+
+@quizbot.command(name= "eval", description= "Evaluates something for you.")
+async def bot_eval(ctx, expr: str, *args):
+	if ctx.guild:
+		if check_perms(ctx.guild.id, ctx.message.author) == False:
+			await ctx.send("You do not have the permission to call this command. :(")
+			print(f"[{ctx.message.author}|{ctx.guild}] tried to cross the perms XD")
+			return
+	await ctx.send("```\n"+str(eval(expr))+"\n```")
 
 quizbot.run(token)
 #Honk

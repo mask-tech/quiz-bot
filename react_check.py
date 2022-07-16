@@ -4,12 +4,12 @@ from datetime import datetime
 from discord.ext import commands
 from os import chdir
 
-chdir('\\'.join(__file__.split('\\')[:-1]))		#Changing path to keep files in same folder
-quizbot= commands.Bot(command_prefix= '0> ', intents= discord.Intents.all(), help_command= None)
-quiz_progress= {}			#For storing the progress of the quiz in a global scale
-loaded_quizzes= {}			#To store the quizzes loaded from the JSON files
-responses= {}				#To store the responses of the participants for the quizzes
-moderation_roles= {}		#Need to be added to prevent misuse of some commands.
+chdir('\\'.join(__file__.split('\\')[:-1]))     #Changing path to keep files in same folder
+quizbot= commands.Bot(command_prefix= '-', intents= discord.Intents.all(), help_command= None)
+quiz_progress= {}          #For storing the progress of the quiz in a global scale
+loaded_quizzes= {}         #To store the quizzes loaded from the JSON files
+responses= {}              #To store the responses of the participants for the quizzes
+moderation_roles= {}       #Need to be added to prevent misuse of some commands.
 
 #Note: Save the bot token and the bot owner ID in the 'moderation' folder in token.txt and owner.txt
 with open('moderation/token.txt') as file: token= file.read()
@@ -63,23 +63,28 @@ async def quiz_refresh(guild_id):
 		#Checking for text question or pictorial question
 		if 'text' in loaded_quizzes[guild_id]['quiz'][quiz_progress[guild_id]['status']-1]:
 			message_string= format_question(guild_id, loaded_quizzes[guild_id]['quiz'][quiz_progress[guild_id]['status']-1])
-			user.send(message_string)
 		else:
 			message_string= f"**Quiz ID:** {guild_id} | {quiz_progress[guild_id]['quiz_id']}"
-			for user in quiz_progress[guild_id]['participants']:
+		for user in quiz_progress[guild_id]['participants']:
+			if 'image' in loaded_quizzes[guild_id]['quiz'][quiz_progress[guild_id]['status']-1]:
 				with open(loaded_quizzes[guild_id]['quiz'][quiz_progress[guild_id]['status']-1]['image'], 'rb') as f:
 					img= discord.File(f)
 					await user.send(message_string, file=img)
-		#Sleep for 17.5 seconds before sending next question. The reaction calculation will be done by on_reaction_add/remove
+			else:
+				await user.send(message_string)
+
 		await sleep(17.5)
+		#Sleep for 17.5 seconds before sending next question. The reaction calculation will be done by on_reaction_add/remove
 		quiz_progress[guild_id]['status'] += 1
 	else:
 		#Calculates the result from the bot's response.
 		results= []
-		for user in quiz_progress[guild_id]['participants']:
-			print(f"Responses of [{user}]: {responses[user]['response']}")
-			results.append( {'user': user, 'marks': calculate_result(loaded_quizzes[guild_id]['quiz'], responses[user]['response'] ) })
-			responses.pop(user)
+		with open(f'responses/{guild_id}/temp.txt', 'w', encoding='utf-16') as f:
+			for user in quiz_progress[guild_id]['participants']:
+				print(f"Responses of [{user}]: {responses[user]['response']}")
+				f.write(f"[{user}]: {responses[user]['response']}\n")
+				results.append( {'user': user, 'marks': calculate_result(loaded_quizzes[guild_id]['quiz'], responses[user]['response'] ) })
+				responses.pop(user)
 		#Sort results according to points and sending it.
 		results= sorted(results, key= lambda x: x['marks'], reverse= True)
 		await quiz_progress[guild_id]['channel'].send(format_results(results))
@@ -203,7 +208,7 @@ async def help(ctx, cmd: str= "", *args):
 	'''Please don't booli me.'''
 	#await ctx.send("Hello. Goose is lazy so hasn't made a help command yet. Blame him for this :skull: \nMeanwhile, check the README link in the repository. At least he has done some stuff there (*\*sigh\**) \nClick here:https://github.com/Goose-Of-War/quiz-bot/blob/main/README.md")
 	if not cmd:
-		await ctx.send(f"Hello. \nHere's the list of all commands in the bot (you can check each individual command details using `{quizbot.command_prefix}help command`): \n\n**__Common commands:__** \n> `available`: This is used to list all available commands in the bot. \n> `describe`: This is used to get info of a command. \n> `ping`: Shows the latency of the bot. \n\n**__Organizer Commands:__** \n> `organizer`: Used to set or get the organizer role who can perform admin functions. \n> `start_quiz`: Used to start a quiz in the server. \n> `terminate`: Used to stop a quiz in the server. \n\nThere are some other functions too. I'll let you find them out. Until then. \nHonk!")
+		await ctx.send(f"Hello. I am the MASK Quiz Bot. \nHere's the list of all commands in the bot (you can check each individual command details using `{quizbot.command_prefix}help command`): \n\n**__Common commands:__** \n> `available`: This is used to list all available commands in the bot. \n> `describe`: This is used to get info of a command. \n> `ping`: Shows the latency of the bot. \n\n**__Organizer Commands:__** \n> `organizer`: Used to set or get the organizer role who can perform admin functions. \n> `start_quiz`: Used to start a quiz in the server. \n> `terminate`: Used to stop a quiz in the server.")
 		return 
 	try: 
 		command= quizbot.get_command(cmd)
@@ -324,21 +329,15 @@ async def mod_role(ctx, role = "", *args):
 async def ping(ctx):
 	await ctx.send(f"Pong! \n**Latency:** {quizbot.latency*1000: .2f}ms")
 
-@quizbot.command(name= "quack", description= "Don't!")
-async def quack(ctx):
-	await ctx.send("*No*, **Quack you!**")
-
-@quizbot.command(name= "honk", description= "Honk!")
-async def honk(ctx):
-	await ctx.send("Yeah!!! My man! A **Honk** especially for you. ")
-
 @quizbot.command(name= "eval", description= "Evaluates something for you.")
 async def bot_eval(ctx, expr: str, *args):
 	if ctx.guild:
-		if check_perms(ctx.guild.id, ctx.message.author) == False:
+		if ctx.message.author.id != owner:
 			await ctx.send("You do not have the permission to call this command. :(")
 			print(f"[{ctx.message.author}|{ctx.guild}] tried to cross the perms XD")
 			return
+		else:
+			await ctx.send("Permission granted.")
 	await ctx.send("```\n"+str(eval(expr))+"\n```")
 
 quizbot.run(token)

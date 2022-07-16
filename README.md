@@ -3,12 +3,6 @@
 __My first GitHub project:__ A Quiz Bot for MASK using discord.py.
 
 ##
-### :star: Announcement: :star:
-I am working on making the bot to conduct quizzes using image questions. This is more or less done. I will just need to get the resources (README and other files) updated.
-
-*(moving on...)*
-##
-
 
 ## Purpose:
 The idea to make this bot came when we had our first MASK quiz. It is expected that none of us knew _that_ many animes and we were forced to rely on herd mentality. Because of this one reason, the purpose of the quiz was somewhat nullified. In order to make the responses anonymous, this bot will be using the DMs to send questions and receive responses rather than using a channel common to all participants.
@@ -70,7 +64,7 @@ The quizzes are stored in JSON files with names _quiz_id_.json in the following 
 			for text question
 			"text" : "The text of the question",
 			for image question
-			"image" : "The local path of the file, generally guiz_files/...",
+			"image" : "The local path of the file, generally quiz_files/...",
 			"options" :
 			{
 				"🇦" : "Option A",
